@@ -33,7 +33,15 @@ readFile(LIST_OF_CITIES)
     let params = parse(query);
     return params == null? null : filter(data,params);
   })
-  .then(data => writeFile(data, LIST_OF_OUTPUT))
+  .then(data => {
+    if (data==null) {
+      console.log('wrong query');
+    }
+    else {
+      console.log(data);
+      writeFile(data, LIST_OF_OUTPUT)
+    }
+  });
 
 //чтение из файла
 function readFile(file) {
