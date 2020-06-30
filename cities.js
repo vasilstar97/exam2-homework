@@ -28,16 +28,31 @@ const fs = require("fs");
 const query = process.argv[2];
 let cities = {};
 
-// Чтение городов в переменную, запись в переменную производится в Callback-функции
-fs.readFile(LIST_OF_CITIES, "utf8", (err, data) => {
-  cities = data;
-  cities = JSON.parse(cities);
+readFile(LIST_OF_CITIES)
+  .then(data => {
+    let params = parse(query);
+    return params == null? null : filter(data,params);
+  })
+  .then(data => writeFile(data, LIST_OF_OUTPUT))
 
-  let params = parse(query);
-  let result = filter(cities, params);
-  console.log(result);
-});
-
+//чтение из файла
+function readFile(file) {
+	return new Promise((resolve, reject) => {
+		fs.readFile(file, "utf8", (error, data) => {
+			error ? reject(error) : resolve(JSON.parse(data));
+		});
+	});
+}
+//запись в файл
+function writeFile(data, file) {
+  return new Promise((resolve, reject) => {
+  	fs.writeFile(file, JSON.stringify(data), "utf8", (error) => {
+  		if (error) reject(error);
+  		resolve(data);
+  	});
+  });
+}
+//filtered list
 function filter(data, params) {
   let result = data;
   if (params.isFiltered) {
@@ -72,11 +87,12 @@ function filter(data, params) {
   return result;
 }
 
+//null or parameters
 function parse(query) {
   let regex = /(all|first|last|[0-9]+)(\s(where)\s%(number|region|city)%(\>|\<|\=)(.+))?/;
   let matches = regex.exec(query);
 
-  if (matches == null) return null;
+  if (matches == null || matches[0]!=query) return null;
 
   let result = {
     count: matches[1],
@@ -87,6 +103,5 @@ function parse(query) {
     result.sign = matches[5],
     result.value = matches[6]
   }
-
   return result;
 }
